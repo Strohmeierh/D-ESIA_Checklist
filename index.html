@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Wichtig für iOS: Verhindert automatisches Zoomen beim Tippen und nutzt die volle Breite -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#007aff">
+    
+    <!-- Link zum PWA Manifest für GitHub Pages -->
+    <link rel="manifest" href="manifest.json">
+    
+    <title>Robin DR400-200_R (D-ESIA) - Checklist</title>
+    <style>
+        :root {
+            --primary-color: #007aff; /* Apple iOS Blue */
+            --emergency-color: #ff3b30; /* Apple iOS Red */
+            --bg-color: #f2f2f7; /* Apple iOS grouped background */
+            --text-color: #1c1c1e;
+            --text-secondary: #8e8e93;
+            --checked-bg: #e5f2ff;
+            --checked-text: #004080;
+            --card-bg: #ffffff;
+            --border-color: #c6c6c8;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, sans-serif; 
+            line-height: 1.4; 
+            color: var(--text-color); 
+            background-color: var(--bg-color);
+            margin: 0; 
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) max(50px, env(safe-area-inset-bottom)) env(safe-area-inset-left);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* --- HEADER & LANGUAGE SWITCHER --- */
+        .top-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 24px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        h1 { 
+            color: var(--primary-color); 
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+            max-width: 60%;
+        }
+
+        .lang-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-selector {
+            background: var(--card-bg);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 6px 30px 6px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .lang-wrapper::after {
+            content: '▼';
+            font-size: 0.7rem;
+            color: var(--primary-color);
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        /* --- ACTION GROUP --- */
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        /* --- BUTTONS --- */
+        button.btn-reset {
+            background-color: var(--card-bg);
+            color: var(--emergency-color);
+            border: 1px solid var(--emergency-color);
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        button.btn-reset:active {
+            background-color: var(--emergency-color);
+            color: #fff;
+            transform: scale(0.98);
+        }
+
+        /* --- ACCORDION SYSTEM --- */
+        .accordion-section {
+            margin-top: 25px;
+        }
+
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 122, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 12px 16px; 
+            border-radius: 10px; 
+            margin-bottom: 10px;
+            position: sticky;
+            top: calc(env(safe-area-inset-top) + 10px);
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .accordion-header:active {
+            background-color: rgba(0, 102, 214, 0.95);
+        }
+
+        .accordion-header.emergency-header {
+            background-color: rgba(255, 59, 48, 0.9);
+        }
+
+        .accordion-header.emergency-header:active {
+            background-color: rgba(220, 53, 69, 0.95);
+        }
+
+        .accordion-header h2 { 
+            color: #fff; 
+            margin: 0;
+            font-size: 1.3rem;
+            pointer-events: none;
+        }
+
+        .accordion-icon {
+            color: #fff;
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .accordion-header.closed .accordion-icon {
+            transform: rotate(-90deg);
+        }
+
+        .accordion-content {
+            display: block;
+            overflow: hidden;
+        }
+
+        .accordion-content.closed {
+            display: none;
+        }
+
+        /* --- CHECKLIST STYLING --- */
+        h3 { 
+            color: var(--text-secondary); 
+            padding-left: 16px;
+            margin-top: 20px; 
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .checklist-group {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+        }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 0.5px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            min-height: 56px; 
+        }
+
+        .checklist-group .check-row:last-child {
+            border-bottom: none;
+        }
+
+        .check-row:active {
+            background-color: #f0f0f5;
+        }
+
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            margin-right: 16px;
+            position: relative;
+            outline: none;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background-color: #fff;
+        }
+
+        input[type="checkbox"]:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 4px;
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 2.5px 2.5px 0;
+            transform: rotate(45deg);
+        }
+
+        .check-text {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .challenge {
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
+            color: var(--text-color);
+        }
+
+        .response {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        input[type="checkbox"]:checked + .check-text .challenge,
+        input[type="checkbox"]:checked + .check-text .response {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .check-row.is-checked {
+            background-color: var(--checked-bg);
+        }
+
+        .emergency-group input[type="checkbox"]:checked {
+            background-color: var(--emergency-color);
+            border-color: var(--emergency-color);
+        }
+        .emergency-group .check-row.is-checked {
+            background-color: #ffebe9;
+        }
+
+        /* --- MODAL DIALOG --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active { 
+            display: flex; 
+        }
+
+        .modal-box {
+            background: rgba(255,255,255,0.95);
+            width: 85%;
+            max-width: 300px;
+            border-radius: 14px;
+            text-align: center;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-text {
+            padding: 24px 20px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            border-bottom: 0.5px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .modal-buttons { 
+            display: flex; 
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        .modal-btn:first-child { 
+            border-right: 0.5px solid var(--border-color); 
+            font-weight: 400; 
+        }
+
+        .modal-btn:last-child { 
+            font-weight: 600; 
+            color: var(--emergency-color); 
+        }
+
+        .modal-btn:active { 
+            background: rgba(0,0,0,0.05); 
+        }
+
+        @media (min-width: 600px) {
+            .container { padding: 24px; }
+            .check-row { padding: 16px 20px; }
+            .check-text { flex-direction: row; justify-content: space-between; align-items: center; gap: 20px; }
+            .challenge { margin-bottom: 0; flex: 1; }
+            .response { text-align: right; font-weight: 500; flex: 1; }
+            input[type="checkbox"]:checked + .check-text .challenge,
+            input[type="checkbox"]:checked + .check-text .response { text-decoration: line-through; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- MODAL (Custom Alert replacement for iOS/Canvas) -->
+<div id="resetModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-text lang-text" data-en="Are you sure you want to clear all checks for a new flight?" data-de="Möchtest du wirklich alle Haken für einen neuen Flug zurücksetzen?">
+            Are you sure you want to clear all checks for a new flight?
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn lang-text" onclick="closeModal()" data-en="Cancel" data-de="Abbrechen">Cancel</button>
+            <button class="modal-btn lang-text" onclick="executeReset()" data-en="Reset" data-de="Zurücksetzen">Reset</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    
+    <!-- HEADER -->
+    <div class="top-bar">
+        <div class="header-content">
+            <h1>Robin DR 400/200R<br><span style="font-size: 1.1rem; color: var(--text-secondary);">( D-ESIA)</span></h1>
+            <div class="action-group">
+                <div class="lang-wrapper">
+                    <select id="langSelect" class="lang-selector" onchange="changeLanguage(this.value)">
+                        <option value="en">English</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
+                <button class="btn-reset lang-text" onclick="showModal()" data-en="New Flight (Reset)" data-de="Neuer Flug (Reset)">New Flight (Reset)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREFLIGHT INSPECTION -->
+    <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="lang-text" data-en="Preflight Inspection" data-de="Vorflugkontrolle">Preflight Inspection</h2>
+            <span class="accordion-icon">▼</span>
+        </div>
+        <div class="accordion-content">
+            
+            <h3 class="lang-text" data-en="General" data-de="Allgemein">General</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Aircraft documents" data-de="Flugzeugdokumente">Aircraft documents</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Weight and balance" data-de="Gewicht und Schwerpunkt">Weight and balance</span><span class="response lang-text" data-en="Confirm within limits" data-de="Innerhalb der Limits bestätigen">Confirm within limits</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Weather and NOTAM briefing" data-de="Wetter und NOTAM Briefing">Weather and NOTAM briefing</span><span class="response lang-text" data-en="Complete" data-de="Abgeschlossen">Complete</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel" data-de="Treibstoff">Fuel</span><span class="response lang-text" data-en="Confirm required fuel" data-de="Benötigte Menge bestätigen">Confirm required fuel</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Oil quantity" data-de="Ölstand">Oil quantity</span><span class="response lang-text" data-en="Check and fill if required" data-de="Prüfen und bei Bedarf füllen">Check and fill if required</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Obvious damage or leaks" data-de="Offensichtliche Schäden oder Lecks">Obvious damage or leaks</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Cabin" data-de="Kabine">Cabin</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Parking brake" data-de="Parkbremse">Parking brake</span><span class="response lang-text" data-en="Set" data-de="Gesetzt">Set</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Control locks" data-de="Ruderböcke">Control locks</span><span class="response lang-text" data-en="Remove" data-de="Entfernt">Remove</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flight controls" data-de="Flugsteuerung">Flight controls</span><span class="response lang-text" data-en="Check free and correct" data-de="Freigängig und korrekt">Check free and correct</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Instruments" data-de="Instrumente">Instruments</span><span class="response lang-text" data-en="Check readings" data-de="Anzeigen prüfen">Check readings</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Avionics master" data-de="Avionik-Hauptschalter">Avionics master</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Circuit breakers" data-de="Sicherungen">Circuit breakers</span><span class="response lang-text" data-en="In" data-de="Drin">In</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Switches" data-de="Schalter">Switches</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel selector" data-de="Tankwahlschalter">Fuel selector</span><span class="response lang-text" data-en="Positioned as required" data-de="Nach Bedarf positioniert">Positioned as required</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Master switch" data-de="Hauptschalter">Master switch</span><span class="response lang-text" data-en="On" data-de="Ein">On</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel quantity indicators" data-de="Tankanzeigen">Fuel quantity indicators</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Lights and pitot heat" data-de="Lichter und Pitotheizung">Lights and pitot heat</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Master switch" data-de="Hauptschalter">Master switch</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Fuselage and Tail Section" data-de="Rumpf und Leitwerk">Fuselage and Tail Section</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Static ports" data-de="Statikports">Static ports</span><span class="response lang-text" data-en="Check clear" data-de="Frei">Check clear</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Antennas" data-de="Antennen">Antennas</span><span class="response lang-text" data-en="Check secure" data-de="Sicher befestigt">Check secure</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Tail surfaces" data-de="Leitwerk">Tail surfaces</span><span class="response lang-text" data-en="Check condition (stabilisers, rudder, trim tabs)" data-de="Zustand prüfen (Höhen-/Seitenruder, Trimmung)">Check condition (stabilisers, rudder, trim tabs)</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Hinges and linkages" data-de="Scharniere und Gestänge">Hinges and linkages</span><span class="response lang-text" data-en="Check secure" data-de="Sicher befestigt">Check secure</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Control surfaces" data-de="Steuerflächen">Control surfaces</span><span class="response lang-text" data-en="Move gently to confirm freedom" data-de="Auf Freigängigkeit prüfen">Move gently to confirm freedom</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Empennage attachments" data-de="Leitwerksbefestigungen">Empennage attachments</span><span class="response lang-text" data-en="Check for security" data-de="Auf Sicherheit prüfen">Check for security</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Right Wing" data-de="Rechte Tragfläche">Right Wing</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Surface" data-de="Oberfläche">Surface</span><span class="response lang-text" data-en="Check for damage or contamination" data-de="Auf Schäden/Verunreinigungen prüfen">Check for damage or contamination</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Aileron and hinges" data-de="Querruder und Scharniere">Aileron and hinges</span><span class="response lang-text" data-en="Check movement and security" data-de="Bewegung und Sicherheit prüfen">Check movement and security</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flap and hinges" data-de="Landeklappen und Scharniere">Flap and hinges</span><span class="response lang-text" data-en="Check movement and security" data-de="Bewegung und Sicherheit prüfen">Check movement and security</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Wingtip and lights" data-de="Flügelspitze und Lichter">Wingtip and lights</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel tank" data-de="Treibstofftank">Fuel tank</span><span class="response lang-text" data-en="Visually check level" data-de="Füllstand visuell prüfen">Visually check level</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel cap" data-de="Tankdeckel">Fuel cap</span><span class="response lang-text" data-en="Secure" data-de="Sicher">Secure</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel vent" data-de="Tankentlüftung">Fuel vent</span><span class="response lang-text" data-en="Clear" data-de="Frei">Clear</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel drain" data-de="Kraftstoff ablassen">Fuel drain</span><span class="response lang-text" data-en="Sample and check for water/contaminants" data-de="Auf Wasser/Verunreinigungen prüfen">Sample and check for water/contaminants</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Wheel and tyre" data-de="Rad und Reifen">Wheel and tyre</span><span class="response lang-text" data-en="Inspect condition and inflation" data-de="Zustand und Luftdruck prüfen">Inspect condition and inflation</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Brake assembly" data-de="Bremsanlage">Brake assembly</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Landing gear strut" data-de="Fahrwerksfederbein">Landing gear strut</span><span class="response lang-text" data-en="Check for proper extension" data-de="Auf Ausfederung prüfen">Check for proper extension</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Nose Section" data-de="Bugsektion">Nose Section</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine cowling" data-de="Motorverkleidung">Engine cowling</span><span class="response lang-text" data-en="Secure" data-de="Sicher">Secure</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Propeller and spinner" data-de="Propeller und Spinner">Propeller and spinner</span><span class="response lang-text" data-en="Check condition, nicks, cracks" data-de="Zustand, Kerben, Risse prüfen">Check condition, nicks, cracks</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Air inlets" data-de="Lufteinlässe">Air inlets</span><span class="response lang-text" data-en="Clear" data-de="Frei">Clear</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Oil level" data-de="Ölstand">Oil level</span><span class="response lang-text" data-en="Check and secure filler cap" data-de="Prüfen und Deckel sichern">Check and secure filler cap</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Coolant" data-de="Kühlmittel">Coolant</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel strainer" data-de="Kraftstofffilter (Gascolator)">Fuel strainer</span><span class="response lang-text" data-en="Drain and check" data-de="Ablassen und prüfen">Drain and check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Nosewheel and tyre" data-de="Bugrad und Reifen">Nosewheel and tyre</span><span class="response lang-text" data-en="Inspect condition and inflation" data-de="Zustand und Luftdruck prüfen">Inspect condition and inflation</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Nose strut" data-de="Bugfahrwerksfederbein">Nose strut</span><span class="response lang-text" data-en="Check for extension" data-de="Auf Ausfederung prüfen">Check for extension</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Static ports" data-de="Statikports">Static ports</span><span class="response lang-text" data-en="Clear" data-de="Frei">Clear</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Landing light" data-de="Landescheinwerfer">Landing light</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Left Wing" data-de="Linke Tragfläche">Left Wing</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Surface" data-de="Oberfläche">Surface</span><span class="response lang-text" data-en="Check for damage or contamination" data-de="Auf Schäden/Verunreinigungen prüfen">Check for damage or contamination</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Aileron and hinges" data-de="Querruder und Scharniere">Aileron and hinges</span><span class="response lang-text" data-en="Check movement and security" data-de="Bewegung und Sicherheit prüfen">Check movement and security</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flap and hinges" data-de="Landeklappen und Scharniere">Flap and hinges</span><span class="response lang-text" data-en="Check movement and security" data-de="Bewegung und Sicherheit prüfen">Check movement and security</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Wingtip and lights" data-de="Flügelspitze und Lichter">Wingtip and lights</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel tank" data-de="Treibstofftank">Fuel tank</span><span class="response lang-text" data-en="Visually check level" data-de="Füllstand visuell prüfen">Visually check level</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel cap" data-de="Tankdeckel">Fuel cap</span><span class="response lang-text" data-en="Secure" data-de="Sicher">Secure</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel vent" data-de="Tankentlüftung">Fuel vent</span><span class="response lang-text" data-en="Clear" data-de="Frei">Clear</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel drain" data-de="Kraftstoff ablassen">Fuel drain</span><span class="response lang-text" data-en="Sample and check for water/contaminants" data-de="Auf Wasser/Verunreinigungen prüfen">Sample and check for water/contaminants</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Wheel and tyre" data-de="Rad und Reifen">Wheel and tyre</span><span class="response lang-text" data-en="Inspect condition and inflation" data-de="Zustand und Luftdruck prüfen">Inspect condition and inflation</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Brake assembly" data-de="Bremsanlage">Brake assembly</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Landing gear strut" data-de="Fahrwerksfederbein">Landing gear strut</span><span class="response lang-text" data-en="Check for proper extension" data-de="Auf Ausfederung prüfen">Check for proper extension</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Finally" data-de="Abschließend">Finally</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Tie-downs, chocks, pitot cover" data-de="Verzurrung, Bremsklötze, Pitotabdeckung">Tie-downs, chocks, pitot cover</span><span class="response lang-text" data-en="Removed" data-de="Entfernt">Removed</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Area around aircraft" data-de="Bereich um das Flugzeug">Area around aircraft</span><span class="response lang-text" data-en="Clear" data-de="Frei">Clear</span></div></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- START -->
+    <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="lang-text" data-en="Start" data-de="Anlassen">Start</h2>
+            <span class="accordion-icon">▼</span>
+        </div>
+        <div class="accordion-content">
+
+            <h3 class="lang-text" data-en="Before Start" data-de="Vor dem Anlassen">Before Start</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Seats and belts" data-de="Sitze und Gurte">Seats and belts</span><span class="response lang-text" data-en="Adjusted and secure" data-de="Eingestellt und gesichert">Adjusted and secure</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Brakes" data-de="Bremsen">Brakes</span><span class="response lang-text" data-en="Test and set" data-de="Testen und setzen">Test and set</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel selector" data-de="Tankwahlschalter">Fuel selector</span><span class="response lang-text" data-en="On or both" data-de="Ein oder beide">On or both</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Avionics" data-de="Avionik">Avionics</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Circuit Breakers" data-de="Sicherungen">Circuit Breakers</span><span class="response lang-text" data-en="In" data-de="Drin">In</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Up" data-de="Einfahren">Up</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Start" data-de="Anlassen">Start</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="Rich" data-de="Reich (Rich)">Rich</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Throttle" data-de="Gashebel (Throttle)">Throttle</span><span class="response lang-text" data-en="Slightly open" data-de="Leicht geöffnet">Slightly open</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Master switch" data-de="Hauptschalter">Master switch</span><span class="response lang-text" data-en="On" data-de="Ein">On</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Beacon/anti-collision light" data-de="Beacon/Antikollisionslicht">Beacon/anti-collision light</span><span class="response lang-text" data-en="On" data-de="Ein">On</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Prime" data-de="Einspritzen (Prime)">Prime</span><span class="response lang-text" data-en="As required" data-de="Nach Bedarf">As required</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Area" data-de="Propellerbereich">Area</span><span class="response lang-text" data-en="Clear" data-de="Frei">Clear</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Ignition" data-de="Zündung">Ignition</span><span class="response lang-text" data-en="Start" data-de="Start">Start</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Oil pressure" data-de="Öldruck">Oil pressure</span><span class="response lang-text" data-en="Check" data-de="Prüfen">Check</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Before Taxi" data-de="Vor dem Rollen">Before Taxi</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Avionics" data-de="Avionik">Avionics</span><span class="response lang-text" data-en="On" data-de="Ein">On</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Radios and instruments" data-de="Funk und Instrumente">Radios and instruments</span><span class="response lang-text" data-en="Set" data-de="Eingestellt">Set</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Transponder" data-de="Transponder">Transponder</span><span class="response lang-text" data-en="Standby" data-de="Standby">Standby</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Brakes" data-de="Bremsen">Brakes</span><span class="response lang-text" data-en="Test during taxi" data-de="Beim Rollen testen">Test during taxi</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Before Takeoff" data-de="Vor dem Start">Before Takeoff</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Controls" data-de="Steuerung">Controls</span><span class="response lang-text" data-en="Free and correct" data-de="Freigängig und korrekt">Free and correct</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel selector" data-de="Tankwahlschalter">Fuel selector</span><span class="response lang-text" data-en="On or both" data-de="Ein oder beide">On or both</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="Rich" data-de="Reich (Rich)">Rich</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine run-up" data-de="Triebwerkstest (Run-up)">Engine run-up</span><span class="response lang-text" data-en="Complete (mags, carb heat, instruments)" data-de="Abgeschlossen (Mags, Vorwärmung, Instrumente)">Complete (mags, carb heat, instruments)</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Trim" data-de="Trimmung">Trim</span><span class="response lang-text" data-en="Set for take-off" data-de="Für Start gesetzt">Set for take-off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Set" data-de="Gesetzt">Set</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Doors and windows" data-de="Türen und Fenster">Doors and windows</span><span class="response lang-text" data-en="Secure" data-de="Sicher">Secure</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Takeoff" data-de="Start">Takeoff</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Setting 1" data-de="Stufe 1">Setting 1</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Propeller" data-de="Propeller">Propeller</span><span class="response lang-text" data-en="Full forward (if constant speed prop)" data-de="Ganz vorne (bei Verstellprop.)">Full forward (if constant speed prop)</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Throttle" data-de="Gashebel (Throttle)">Throttle</span><span class="response lang-text" data-en="Full" data-de="Voll">Full</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine instruments" data-de="Triebwerksinstrumente">Engine instruments</span><span class="response lang-text" data-en="Check green" data-de="Im grünen Bereich">Check green</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Rotate" data-de="Rotieren">Rotate</span><span class="response lang-text" data-en="As airspeed indicated" data-de="Wie angezeigt">As airspeed indicated</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Climb" data-de="Steigflug">Climb</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Speed" data-de="Geschwindigkeit">Speed</span><span class="response lang-text" data-en="ca 120 km/h" data-de="ca. 120 km/h">ca 120 km/h</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Prop RPM" data-de="Propellerdrehzahl">Prop RPM</span><span class="response lang-text" data-en="2500" data-de="2500">2500</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Pressure" data-de="Ladedruck">Pressure</span><span class="response lang-text" data-en="25 inch" data-de="25 Inch">25 inch</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="12 gal" data-de="12 gal">12 gal</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Setting 0" data-de="Stufe 0">Setting 0</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel Pump" data-de="Treibstoffpumpe">Fuel Pump</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine instruments" data-de="Triebwerksinstrumente">Engine instruments</span><span class="response lang-text" data-en="Monitor" data-de="Überwachen">Monitor</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Cruise" data-de="Reiseflug">Cruise</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Prop RPM" data-de="Propellerdrehzahl">Prop RPM</span><span class="response lang-text" data-en="2350" data-de="2350">2350</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Pressure" data-de="Ladedruck">Pressure</span><span class="response lang-text" data-en="22 Inch" data-de="22 Inch">22 Inch</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="9 gal" data-de="9 gal">9 gal</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine instruments" data-de="Triebwerksinstrumente">Engine instruments</span><span class="response lang-text" data-en="Monitor" data-de="Überwachen">Monitor</span></div></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRUISE (In-Flight) -->
+    <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="lang-text" data-en="Cruise (In-Flight)" data-de="Reiseflug">Cruise (In-Flight)</h2>
+            <span class="accordion-icon">▼</span>
+        </div>
+        <div class="accordion-content">
+            <h3 class="lang-text" data-en="FREDA" data-de="FREDA">FREDA</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel" data-de="Treibstoff (Fuel)">Fuel</span><span class="response lang-text" data-en="On and sufficient" data-de="Geöffnet und ausreichend">On and sufficient</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Radio" data-de="Funk (Radio)">Radio</span><span class="response lang-text" data-en="Tuned, identified, instructions obtained" data-de="Eingestellt, identifiziert, Freigabe erhalten">Tuned, identified, instructions obtained</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine" data-de="Triebwerk (Engine)">Engine</span><span class="response lang-text" data-en="T&amp;Ps, mixture, carb ice" data-de="Temps & Drücke, Gemisch, Vereisung">T&amp;Ps, mixture, carb ice</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Directional Indicator" data-de="Kurskreisel (DI)">Directional Indicator</span><span class="response lang-text" data-en="Synchronised with compass" data-de="Mit Kompass synchronisiert">Synchronised with compass</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Altimeter" data-de="Höhenmesser (Altimeter)">Altimeter</span><span class="response lang-text" data-en="Set as required" data-de="Nach Bedarf eingestellt">Set as required</span></div></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARRIVAL -->
+    <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h2 class="lang-text" data-en="Arrival" data-de="Ankunft">Arrival</h2>
+            <span class="accordion-icon">▼</span>
+        </div>
+        <div class="accordion-content">
+            <h3 class="lang-text" data-en="Descent" data-de="Sinkflug">Descent</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Altimeter" data-de="Höhenmesser (Altimeter)">Altimeter</span><span class="response lang-text" data-en="QNH" data-de="QNH">QNH</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Radio" data-de="Funk (Radio)">Radio</span><span class="response lang-text" data-en="Landing Field" data-de="Zielflugplatz">Landing Field</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Landing Lights" data-de="Landescheinwerfer">Landing Lights</span><span class="response lang-text" data-en="As needed" data-de="Nach Bedarf">As needed</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Speed" data-de="Geschwindigkeit">Speed</span><span class="response lang-text" data-en="&lt;150 km/h" data-de="&lt;150 km/h">&lt;150 km/h</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel Pump" data-de="Treibstoffpumpe">Fuel Pump</span><span class="response lang-text" data-en="On" data-de="Ein">On</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Power" data-de="Leistung">Power</span><span class="response lang-text" data-en="Reduce as needed" data-de="Nach Bedarf reduzieren">Reduce as needed</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="Rich, EDSF -1-2 cm" data-de="Reich, EDSF -1-2 cm">Rich, EDSF -1-2 cm</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Setting 1" data-de="Stufe 1">Setting 1</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Prop RPM" data-de="Propellerdrehzahl">Prop RPM</span><span class="response lang-text" data-en="Take off" data-de="Take off">Take off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Engine instruments" data-de="Triebwerksinstrumente">Engine instruments</span><span class="response lang-text" data-en="Monitor" data-de="Überwachen">Monitor</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Seat Belts" data-de="Sicherheitsgurte">Seat Belts</span><span class="response lang-text" data-en="fasten" data-de="Angelegt">fasten</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Before Landing" data-de="Vor der Landung">Before Landing</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Setting 2" data-de="Stufe 2">Setting 2</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Speed" data-de="Geschwindigkeit">Speed</span><span class="response lang-text" data-en="130 km/h" data-de="130 km/h">130 km/h</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="After Landing" data-de="Nach der Landung">After Landing</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Lights" data-de="Lichter">Lights</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel Pump" data-de="Treibstoffpumpe">Fuel Pump</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Transponder" data-de="Transponder">Transponder</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Up" data-de="Einfahren">Up</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Shutdown" data-de="Abstellen">Shutdown</h3>
+            <div class="checklist-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Parking Brake" data-de="Parkbremse">Parking Brake</span><span class="response lang-text" data-en="Set" data-de="Gesetzt">Set</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Prop RPM" data-de="Propellerdrehzahl">Prop RPM</span><span class="response lang-text" data-en="1000" data-de="1000">1000</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Avionics" data-de="Avionik">Avionics</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Electrical Equipment" data-de="Elektrische Verbraucher">Electrical Equipment</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="Idle" data-de="Leerlauf">Idle</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Ignition" data-de="Zündung">Ignition</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Master switch" data-de="Hauptschalter">Master switch</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Alternator" data-de="Alternator">Alternator</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flight Hrs" data-de="Flugstunden">Flight Hrs</span><span class="response lang-text" data-en="Noted" data-de="Notiert">Noted</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Prop RPM" data-de="Propellerdrehzahl">Prop RPM</span><span class="response lang-text" data-en="Take Off" data-de="Take Off">Take Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Flaps" data-de="Landeklappen">Flaps</span><span class="response lang-text" data-en="Setting 2" data-de="Stufe 2">Setting 2</span></div></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- EMERGENCY -->
+    <div class="accordion-section">
+        <div class="accordion-header emergency-header" onclick="toggleAccordion(this)">
+            <h2 class="lang-text" data-en="Emergency" data-de="Notverfahren">Emergency</h2>
+            <span class="accordion-icon">▼</span>
+        </div>
+        <div class="accordion-content">
+            <h3 class="lang-text" data-en="Fire on the Ground" data-de="Feuer am Boden">Fire on the Ground</h3>
+            <div class="checklist-group emergency-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Throttle" data-de="Gashebel (Throttle)">Throttle</span><span class="response lang-text" data-en="Idle" data-de="Leerlauf">Idle</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="Idle cut-off" data-de="Leerlauf-Abschaltung">Idle cut-off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel" data-de="Treibstoff (Fuel)">Fuel</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Ignition" data-de="Zündung">Ignition</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Master Switch" data-de="Hauptschalter">Master Switch</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Parking Brake" data-de="Parkbremse">Parking Brake</span><span class="response lang-text" data-en="On" data-de="Ein">On</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Engine Fire in the Air" data-de="Triebwerksbrand im Flug">Engine Fire in the Air</h3>
+            <div class="checklist-group emergency-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Throttle" data-de="Gashebel (Throttle)">Throttle</span><span class="response lang-text" data-en="Idle" data-de="Leerlauf">Idle</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Mixture" data-de="Gemisch (Mixture)">Mixture</span><span class="response lang-text" data-en="Idle cut-off" data-de="Leerlauf-Abschaltung">Idle cut-off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel" data-de="Treibstoff (Fuel)">Fuel</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Ignition" data-de="Zündung">Ignition</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Cabin Heat" data-de="Kabinenheizung">Cabin Heat</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Radio" data-de="Funk (Radio)">Radio</span><span class="response lang-text" data-en="Mayday" data-de="Mayday">Mayday</span></div></label>
+            </div>
+
+            <h3 class="lang-text" data-en="Engine Failure After Take Off" data-de="Triebwerksausfall nach dem Start">Engine Failure After Take Off</h3>
+            <div class="checklist-group emergency-group">
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Attitude/Configuration" data-de="Fluglage/Konfiguration">Attitude/Configuration</span><span class="response lang-text" data-en="Lower nose for best glide" data-de="Nase senken für bestes Gleiten">Lower nose for best glide</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Fuel" data-de="Treibstoff (Fuel)">Fuel</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Ignition" data-de="Zündung">Ignition</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+                <label class="check-row"><input type="checkbox" onchange="toggleRow(this)"><div class="check-text"><span class="challenge lang-text" data-en="Master Switch" data-de="Hauptschalter">Master Switch</span><span class="response lang-text" data-en="Off" data-de="Aus">Off</span></div></label>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- CHECKBOX LOGIC ---
+    function toggleRow(checkbox) {
+        const row = checkbox.closest('.check-row');
+        if (checkbox.checked) {
+            row.classList.add('is-checked');
+        } else {
+            row.classList.remove('is-checked');
+        }
+    }
+
+    // --- ACCORDION LOGIC ---
+    function toggleAccordion(header) {
+        const content = header.nextElementSibling;
+        const isClosed = content.classList.contains('closed');
+        
+        if (isClosed) {
+            content.classList.remove('closed');
+            header.classList.remove('closed');
+        } else {
+            content.classList.add('closed');
+            header.classList.add('closed');
+        }
+    }
+
+    // --- MODAL LOGIC ---
+    const modal = document.getElementById('resetModal');
+
+    function showModal() {
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    function executeReset() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+            toggleRow(cb);
+        });
+        closeModal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Close modal if user clicks outside of the box
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+
+    // --- LANGUAGE SWITCH LOGIC ---
+    function changeLanguage(lang) {
+        document.querySelectorAll('.lang-text').forEach(el => {
+            // Get translation string from data-en or data-de attribute
+            if (el.dataset[lang]) {
+                el.textContent = el.dataset[lang];
+            }
+        });
+        document.documentElement.lang = lang; // Update HTML lang tag
+    }
+
+    // Set initial language on page load based on select box
+    document.addEventListener("DOMContentLoaded", () => {
+        const langBox = document.getElementById('langSelect');
+        changeLanguage(langBox.value);
+    });
+
+    // --- SERVICE WORKER REGISTRATION (OFFLINE MODE) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('Offline-Modus (ServiceWorker) erfolgreich registriert!');
+                })
+                .catch(error => {
+                    console.log('Fehler bei der ServiceWorker-Registrierung: ', error);
+                });
+        });
+    }
+
+</script>
+
+</body>
+</html>
