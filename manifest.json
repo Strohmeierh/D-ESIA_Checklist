@@ -1,6 +1,6 @@
 {
-  "name": "Robin DR400 Checklist",
-  "short_name": "DR400 Check",
+  "name": "D-ESIA Checklist",
+  "short_name": "D-ESIA Check",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f2f2f7",
